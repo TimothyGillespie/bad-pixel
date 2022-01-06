@@ -1,0 +1,27 @@
+version: "3"
+services:
+  bad-pixel:
+    image: 725c425bcf12
+    environment:
+      - BAD_PIXEL_DB_USER=baduser
+      - BAD_PIXEL_DB_PASSWORD=terriblyinsecurepassword
+      - BAD_PIXEL_DB_URI=db
+      - BAD_PIXEL_DB_PORT=3306
+      - BAD_PIXEL_DB_DATABASE=bad-data
+      - BAD_PIXEL_WAIT_SECONDS=20
+    ports:
+      - "127.0.0.1:11001:8080"
+    restart: unless-stopped
+    depends_on:
+      - db
+  db:
+    image: mysql:latest
+    ports:
+      - "127.0.0.1:11000:3306"
+    volumes:
+      - /saving/mysql/data:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=bad-data
+      - MYSQL_USER=baduser
+      - MYSQL_PASSWORD=terriblyinsecurepassword
