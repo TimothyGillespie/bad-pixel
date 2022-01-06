@@ -29,11 +29,16 @@ type PageHitLogEntry struct {
 
 func main() {
 
-	waitTime, err := strconv.Atoi(os.Getenv("BAD_PIXEL_WAIT_SECONDS"))
-	if err != nil {
-		panic(err)
+	waitSec := os.Getenv("BAD_PIXEL_WAIT_SECONDS")
+
+	if waitSec != "" {
+		waitTime, err := strconv.Atoi(waitSec)
+		if err != nil {
+			panic(err)
+		}
+
+		time.Sleep(time.Duration(int64(waitTime) * time.Second.Nanoseconds()))
 	}
-	time.Sleep(time.Duration(int64(waitTime) * time.Second.Nanoseconds()))
 
 	dbUsername := os.Getenv("BAD_PIXEL_DB_USER")
 	dbPassword := os.Getenv("BAD_PIXEL_DB_PASSWORD")
@@ -61,17 +66,22 @@ func main() {
 }
 
 func HelloHandler(w http.ResponseWriter, r *http.Request) {
+	var ip string
+
+	passThrougIp := r.Header.Get("X-Real-IP")
+
+	if passThrougIp != "" {
+		ip = passThrougIp
+	} else {
+		ip = r.RemoteAddr
+	}
+
 	db.Create(&PageHitLogEntry{
-		IP:         r.RemoteAddr,
+		IP:         ip,
 		Host:       r.Host,
 		UserAgent:  r.UserAgent(),
 		RequestUri: r.RequestURI,
 	})
-
-	println(r.Host)
-	println(r.UserAgent())
-	println(r.RemoteAddr)
-	println(r.RequestURI)
 
 	w.Write(badPixelBytes)
 	w.Header().Set("Content-Type", "image/png")
